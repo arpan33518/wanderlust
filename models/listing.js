@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
 const listingSchema = new Schema({
     title: {
@@ -8,13 +8,19 @@ const listingSchema = new Schema({
     },
     description: String,
     image: {
-        type: String,
-        set: (v) => v === "" ? "https://images.unsplash.com/photo-1754910567873-91ae04195d61?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" : v,
+        filename: {
+            type: String,
+            default: "listingimage"
+        },
+        url: {
+            type: String,
+            default: "https://images.unsplash.com/default.jpg"
+        }
     },
     price: Number,
     location: String,
     country: String,
 });
-F
+
 const Listing = mongoose.model("Listing", listingSchema);
-module.export = Listing;
+module.exports = Listing;

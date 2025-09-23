@@ -7,11 +7,14 @@ const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");
-const { listingSchema,reviewSchema} = require("./schema.js");
+const { listingSchema, reviewSchema } = require("./schema.js");
 const Review = require("./models/review.js");
 const { wrap } = require("module");
 const session = require("express-session");
 const flash = require("connect-flash");
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
+const User = require("./models/user.js");
 
 const listings = require("./routes/listing.js");
 const reviews = require("./routes/review.js");
@@ -41,23 +44,50 @@ app.use(express.static(path.join(__dirname, "/public")));
 
 
 const sessionOptions = {
-    secret:"mysupersecretcode",
-    resave:false,
-    saveUninitialized:true,
-    cookie : {
-        expires : Date.now() + 7 *24 *60 *60 *1000,
-        maxAge:7 *24 *60 *60 *1000,
-        httpOnly:true,
+    secret: "mysupersecretcode",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
     },
 };
-
-app.use(session(sessionOptions));
-app.use(flash());
 
 
 app.get("/", (req, res) => {
     res.send("Hi,I am root");
 });
+
+
+app.use(session(sessionOptions));
+app.use(flash());
+
+
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+
+app.use((req,res,next) =>{
+    res.locals.success = req.flash("success");
+    next();
+});
+
+
+app.get("/demouser",async(req,res) =>{
+    let fakeUser = new User({
+        email : "student@gmail.com",
+        username : delta-student
+    });
+
+    let registeredUser = await User.register(fakeUser , "helloworld");
+    res.send(registeredUser);
+})
+
 
 app.use("/listings", listings)
 app.use("/listings/:id/reviews", reviews)
@@ -71,8 +101,7 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     let { statusCode = 500, message = "something went wrong!" } = err;
     res.status(statusCode).render("error.ejs", { err });
-    // res.status(statusCode).send(message)
-    // res.send("something went wrong!")
+
 });
 
 app.listen(8080, () => {
